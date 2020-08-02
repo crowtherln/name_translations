@@ -22,8 +22,11 @@ soup = BeautifulSoup(data, "lxml")
 #   tables.
 first_columns = soup.select("table tr td:nth-of-type(1)")
 
-# Create a list to which to add dictionaries for the monarchs.
-dicts = []
+# Create lists to which to add dictionaries for the monarchs. One list
+#   will include only the English language pages. The other will include
+#   entries for all languages.
+english_dicts = []
+all_dicts = []
 
 # Create a list to which to add hrefs to check for duplicates. (Hrefs
 #   will serve as unique identifiers for the monarchs.)
@@ -43,7 +46,7 @@ for row in first_columns:
                         title = tag.get("title")
                         if title is not None:
                             # Remove en dashes and following text from
-                            #   tiitles. For instance, if the title is
+                            #   titles. For instance, if the title is
                             #   "Alfred le Grand - French", change it to
                             #   "Alfred le Grand".
                             en_dash = title.find("–")
@@ -71,13 +74,20 @@ for row in first_columns:
                                 title_first_word = title
                             # Create a dictionary for the monarch.
                             href = {
+                                "Name (English)": title_first_word,
+                                "Full Name (English)": title,
                                 "URL": "https://en.wikipedia.org" +
                                     href,
-                                "English": title,
-                                "English First Word": title_first_word
+                                "Language": "English",
+                                "Name": title_first_word,
+                                "Full Name": title,
+                                "Familiar-ish Script": "Yes",
+                                "Given Name Usually First": "Yes"
                                 }
-                            # Add the newly-created dictionary to dicts.
-                            dicts.append(href)
+                            # Add the newly-created dictionary to the
+                            #   lists.
+                            english_dicts.append(href)
+                            all_dicts.append(href)
 
 # Create a dictionary of Wikipedia languages. Language codes and names
 #   are taken from https://en.wikipedia.org/wiki/List_of_Wikipedias. For
@@ -433,7 +443,8 @@ language_tags = {
     "zea": {"name": "Zealandic", "fs": "Yes", "gnf": "Yes"},
     "zh": {"name": "Chinese", "fs": "No", "gnf": "idk"},
     # "zh-classical" is a nonstandard variant of "lzh".
-    "zh-classical": {"name": "Classical Chinese", "fs": "No", "gnf": "idk"},
+    "zh-classical": {"name": "Classical Chinese", "fs": "No",
+                     "gnf": "idk"},
     # "zh-min-nan" is a nonstandard variant of "nan".
     "zh-min-nan": {"name": "Min Nan", "fs": "Yes", "gnf": "Yes"},
     # "zh-yue" is a nonstandard variant of "yue".
@@ -441,61 +452,61 @@ language_tags = {
     "zu": {"name": "Zulu", "fs": "Yes", "gnf": "Yes"}
     }
 
-for dict in dicts:
+for english_dict in english_dicts:
     # Scrape each URL added above.
-    url = dict["URL"]
+    url = english_dict["URL"]
     res = requests.get(url)
     data = res.text
     soup = BeautifulSoup(data, "lxml")
     # Find all <a> tags for interlanguage links.
     tags = soup.find_all("a", {"class": "interlanguage-link-target"})
     for tag in tags:
-        title = tag["title"]
-        if title is not None:
-            # Remove en dashes and following text from titles. For
-            #   instance, if the title is "Alfred le Grand – French",
-            #   change it to "Alfred le Grand".
-            en_dash = title.find("–")
-            if en_dash > 0:
-                title = title[:en_dash-1]
-            # Remove parenthetical text from titles. For instance, if
-            #   the title is "Henri Ier (roi d'Angleterre", change it to
-            #   "Henri Ier".
-            paren = title.find("(")
-            if paren > 0:
-                title = title[:paren-1]
-            # Remove commas and following text from titles. For
-            #   instance, if the title is "Vilim I, kralj Engleske",
-            #   change it to "Vilim I".
-            comma = title.find(",")
-            if comma > 0:
-                title = title[:comma]
-            try:
-                # If (a) the language is in a script that I can at least
-                #   partially make sense of, and (b) a person's given
-                #   name tends to appear before their surname in the
-                #   title of their Wikipedia entry in the language, get
-                #   the first word of the title.
-                if language_tags[tag["lang"]]["fs"] == "Yes":
-                    if language_tags[tag["lang"]]["gnf"] == "Yes":
-                        # Create a field name for the first word of the
-                        #   title.
-                        lang_first_word = language_tags[
-                            tag["lang"]]["name"] + " First Word"
-                        # Get the first word of the title.
-                        space = title.find(" ")
-                        if space > 0:
-                            first_word = title[:space]
-                        else:
-                            first_word = title
-                        dict[lang_first_word] = first_word
-            except:
-                continue
-            dict[language_tags[tag["lang"]]["name"]] = title      
+        try:
+            title = tag["title"]
+            if title is not None:
+                # Remove en dashes and following text from titles. For
+                #   instance, if the title is "Alfred le Grand –
+                #   French", change it to "Alfred le Grand".
+                en_dash = title.find("–")
+                if en_dash > 0:
+                    title = title[:en_dash-1]
+                # Remove parenthetical text from titles. For instance,
+                #   if the title is "Henri Ier (roi d'Angleterre)",
+                #   change it to "Henri Ier".
+                paren = title.find("(")
+                if paren > 0:
+                    title = title[:paren-1]
+                # Remove commas and following text from titles. For
+                #   instance, if the title is "Vilim I, kralj Engleske",
+                #   change it to "Vilim I".
+                comma = title.find(",")
+                if comma > 0:
+                    title = title[:comma]
+                # Get the first word of the title.
+                space = title.find(" ")
+                if space > 0:
+                    first_word = title[:space]
+                else:
+                    first_word = title
+                all_dicts.append({
+                    "Name (English)": english_dict["Name (English)"],
+                    "Full Name (English)": english_dict[
+                        "Full Name (English)"],
+                    "URL": english_dict["URL"],
+                    "Language": language_tags[tag["lang"]]["name"],
+                    "Name": first_word,
+                    "Full Name": title,
+                    "Familiar-ish Script": language_tags[
+                        tag["lang"]]["fs"],
+                    "Given Name Usually First": language_tags[
+                        tag["lang"]]["gnf"]
+                    })
+        except:
+            continue      
 
 # Change to the directory in which to save the csv.
 os.chdir("C:/Users/username/Documents")
 # Create a dataframe out of dicts.
-df = pd.DataFrame(dicts)
+df = pd.DataFrame(all_dicts)
 # Write the dataframe to csv.
-df.to_csv("english_monarchs_simplified.csv", encoding="utf-8-sig")
+df.to_csv("english_monarchs.csv", encoding="utf-8-sig")
