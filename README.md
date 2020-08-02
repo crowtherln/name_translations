@@ -10,4 +10,4 @@ This program produces a .csv file with the names of English monarchs in
 The program returns some entries that are not for monarchs—or even
     people—but most of the entries are for people.
 
-The program takes about 35 seconds to run.
+The program takes about 55 seconds to run.
