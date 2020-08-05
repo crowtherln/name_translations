@@ -1,13 +1,16 @@
-# english_monarchs
+# name_translations
 
-This program produces a .csv file with the names of English monarchs in
-    different languages. It is part of a project to find which names
-    correspond to which other names in different languages. The reason
-    for which monarchs are included in this project is that the names of
-    ancient, medieval, and early modern monarchs are more likely to be
-    translated than are names of contemporary humans.
+This is a project to find translations of people's given names. To do
+    this, I scrape Wikipedia lists that tend to include people who
+    lived in ancient, medieval, or early modern times, since their
+    names are more likely to be translated than are names of
+    contemporary people. The programs produce csv files of which given
+    names in English correspond to which given names in other
+    languages.
 
-The program returns some entries that are not for monarchs—or even
-    people—but most of the entries are for people.
+english_monarchs.py does this for English monarchs and takes about 55
+    seconds to run. name_translations.py does it for that and 27 other
+    lists; it takes about 25 minutes to run.
 
-The program takes about 55 seconds to run.
+These programs return some entries for nonhuman entities, but most
+    entries are for humans.
